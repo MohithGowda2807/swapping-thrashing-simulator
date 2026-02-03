@@ -133,19 +133,25 @@ class PageRenderer {
 
         if (!mesh) {
             mesh = this.createPageMesh(page);
-            this.scene.add(mesh);
         }
 
-        const targetPos = this.diskVisualizer.getBlockPosition(block.id);
+        // Get LOCAL position within disk group
+        const targetLocalPos = this.diskVisualizer.getLocalBlockPosition(block.id);
 
         // Change color to blue tint for disk
         mesh.material.color.setHex(0x3b82f6);
         mesh.material.emissive.setHex(0x1e40af);
 
+        // Remove from scene if present, add to disk group
+        this.scene.remove(mesh);
+        this.diskVisualizer.getGroup().add(mesh);
+
         if (animated) {
-            this.animateFallDown(mesh, targetPos);
+            // Start from above the target position (local coords)
+            mesh.position.set(targetLocalPos.x, targetLocalPos.y + 3, targetLocalPos.z);
+            this.animateFallDown(mesh, targetLocalPos);
         } else {
-            mesh.position.copy(targetPos);
+            mesh.position.copy(targetLocalPos);
         }
 
         // Trigger disk spin
@@ -165,21 +171,34 @@ class PageRenderer {
         if (!mesh) return;
 
         const startPos = mesh.position.clone();
-        const endPos = this.diskVisualizer.getBlockPosition(targetBlock.id);
+
+        // Get the disk group for coordinate transformation
+        const diskGroup = this.diskVisualizer.getGroup();
+        const diskWorldPos = diskGroup.position.clone();
+
+        // Get local block position and convert to world for animation
+        const targetLocalPos = this.diskVisualizer.getLocalBlockPosition(targetBlock.id);
+        const endWorldPos = new THREE.Vector3(
+            targetLocalPos.x + diskWorldPos.x,
+            targetLocalPos.y + diskWorldPos.y,
+            targetLocalPos.z + diskWorldPos.z
+        );
 
         // Arc path
         const midPoint = new THREE.Vector3(
-            (startPos.x + endPos.x) / 2,
-            Math.max(startPos.y, endPos.y) + 4,
-            (startPos.z + endPos.z) / 2
+            (startPos.x + endWorldPos.x) / 2,
+            Math.max(startPos.y, endWorldPos.y) + 4,
+            (startPos.z + endWorldPos.z) / 2
         );
 
         // Clear from RAM
         this.ramVisualizer.clearPageMesh(sourceFrame.id);
 
-        // Animate along arc
+        // Animate along arc in world coordinates
         const duration = 800;
         const startTime = Date.now();
+        const scene = this.scene;
+        const diskVisualizer = this.diskVisualizer;
 
         const animate = () => {
             const elapsed = Date.now() - startTime;
@@ -187,9 +206,9 @@ class PageRenderer {
 
             // Quadratic bezier
             const t1 = 1 - t;
-            mesh.position.x = t1 * t1 * startPos.x + 2 * t1 * t * midPoint.x + t * t * endPos.x;
-            mesh.position.y = t1 * t1 * startPos.y + 2 * t1 * t * midPoint.y + t * t * endPos.y;
-            mesh.position.z = t1 * t1 * startPos.z + 2 * t1 * t * midPoint.z + t * t * endPos.z;
+            mesh.position.x = t1 * t1 * startPos.x + 2 * t1 * t * midPoint.x + t * t * endWorldPos.x;
+            mesh.position.y = t1 * t1 * startPos.y + 2 * t1 * t * midPoint.y + t * t * endWorldPos.y;
+            mesh.position.z = t1 * t1 * startPos.z + 2 * t1 * t * midPoint.z + t * t * endWorldPos.z;
 
             // Rotate during transfer
             mesh.rotation.y += 0.1;
@@ -197,12 +216,20 @@ class PageRenderer {
             if (t < 1) {
                 requestAnimationFrame(animate);
             } else {
-                // Complete
+                // Complete - reparent to disk group with local coordinates
                 mesh.rotation.y = 0;
                 mesh.material.color.setHex(0x3b82f6);
                 mesh.material.emissive.setHex(0x1e40af);
-                this.diskVisualizer.setPageMesh(targetBlock.id, mesh);
-                this.diskVisualizer.triggerIOAnimation();
+
+                // Remove from scene and add to disk group
+                scene.remove(mesh);
+                diskGroup.add(mesh);
+
+                // Set local position within disk group
+                mesh.position.copy(targetLocalPos);
+
+                diskVisualizer.setPageMesh(targetBlock.id, mesh);
+                diskVisualizer.triggerIOAnimation();
 
                 if (onComplete) onComplete();
             }
@@ -218,8 +245,24 @@ class PageRenderer {
         const mesh = this.pageMeshes.get(page.id);
         if (!mesh) return;
 
-        const startPos = mesh.position.clone();
+        // Get disk group for coordinate transformation
+        const diskGroup = this.diskVisualizer.getGroup();
+        const diskWorldPos = diskGroup.position.clone();
+
+        // Convert local mesh position to world coordinates for animation start
+        const localPos = mesh.position.clone();
+        const startPos = new THREE.Vector3(
+            localPos.x + diskWorldPos.x,
+            localPos.y + diskWorldPos.y,
+            localPos.z + diskWorldPos.z
+        );
+
         const endPos = this.ramVisualizer.getFramePosition(targetFrame.id);
+
+        // Remove from disk group, add to scene for animation
+        diskGroup.remove(mesh);
+        this.scene.add(mesh);
+        mesh.position.copy(startPos);
 
         // Arc path (higher arc for swap in)
         const midPoint = new THREE.Vector3(
@@ -238,6 +281,7 @@ class PageRenderer {
 
         const duration = 800;
         const startTime = Date.now();
+        const ramVisualizer = this.ramVisualizer;
 
         const animate = () => {
             const elapsed = Date.now() - startTime;
@@ -263,7 +307,7 @@ class PageRenderer {
                 mesh.material.color.copy(originalColor);
                 mesh.material.emissive.copy(originalColor);
                 mesh.material.emissiveIntensity = 0.1;
-                this.ramVisualizer.setPageMesh(targetFrame.id, mesh);
+                ramVisualizer.setPageMesh(targetFrame.id, mesh);
 
                 if (onComplete) onComplete();
             }

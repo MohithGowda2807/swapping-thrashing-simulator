@@ -17,6 +17,7 @@ class ThrashingVisualizer {
         this.controls = null;
         this.eventLog = null;
         this.scenarioSelector = null;
+        this.activityPanel = null;
 
         // State
         this.isInitialized = false;
@@ -77,6 +78,9 @@ class ThrashingVisualizer {
      * Initialize UI components
      */
     initializeUI() {
+        // Activity Panel (real-time operation display)
+        this.activityPanel = new ActivityPanel('activity-panel-container');
+
         // KPI Dashboard
         this.kpiDashboard = new KPIDashboard('kpi-container');
 
@@ -109,65 +113,108 @@ class ThrashingVisualizer {
      * Setup simulation event callbacks
      */
     setupSimulationCallbacks() {
+        // Store reference for closures
+        const activityPanel = this.activityPanel;
+        const eventLog = this.eventLog;
+        const pageRenderer = this.pageRenderer;
+        const diskVisualizer = this.diskVisualizer;
+        const effectsManager = this.effectsManager;
+        const simulation = this.simulation;
+        const kpiDashboard = this.kpiDashboard;
+
         // Page allocated to RAM
         this.simulation.on('onPageAllocated', (page, frame) => {
-            this.pageRenderer.addPageToRAM(page, frame, true);
+            pageRenderer.addPageToRAM(page, frame, true);
         });
 
-        // Page evicted
+        // Page evicted (before swap out)
         this.simulation.on('onPageEvicted', (page, frame) => {
-            this.eventLog.logSwapOut(page, this.simulation.policy.getName());
+            const policyName = simulation.policy.getName();
+            eventLog.logSwapOut(page, policyName);
+
+            // Update activity panel with policy decision
+            let victimReason = '';
+            if (policyName === 'FIFO') {
+                victimReason = 'Oldest page in RAM (first loaded)';
+            } else if (policyName === 'LRU') {
+                victimReason = 'Least recently accessed page';
+            }
+            activityPanel.showPolicyDecision(policyName, page, victimReason);
         });
 
         // Page swapped out to disk
         this.simulation.on('onPageSwappedOut', (page, block) => {
-            const frame = this.simulation.frames.find(f => f.page === page);
+            const frame = simulation.frames.find(f => f.page === page);
+            const policyName = simulation.policy.getName();
+            let victimReason = policyName === 'FIFO' ? 'First-In-First-Out' : 'Least Recently Used';
+
+            // Update activity panel
+            activityPanel.showSwapOut(page, victimReason, policyName, block ? block.id : null);
+
             if (frame) {
-                this.pageRenderer.animateSwapOut(page, frame, block);
+                pageRenderer.animateSwapOut(page, frame, block);
             } else {
                 // Direct allocation to disk
-                this.pageRenderer.addPageToDisk(page, block, true);
+                pageRenderer.addPageToDisk(page, block, true);
             }
-            this.diskVisualizer.startSpin();
+            diskVisualizer.startSpin();
+
+            // Clear after animation
+            activityPanel.clearSwapOut();
         });
 
         // Page swapped in from disk
         this.simulation.on('onPageSwappedIn', (page) => {
-            this.eventLog.logSwapIn(page);
+            eventLog.logSwapIn(page);
+
+            // Show swap in on activity panel
+            const targetFrame = simulation.frames.find(f => f.page === page);
+            activityPanel.showSwapIn(page, page.diskBlockId, targetFrame ? targetFrame.id : null);
+            activityPanel.clearSwapIn();
         });
 
         // Page accessed
         this.simulation.on('onPageAccessed', (page, result) => {
-            this.pageRenderer.highlightPage(page.id);
+            pageRenderer.highlightPage(page.id);
+
+            // Update activity panel
+            const isHit = result === 'hit';
+            activityPanel.showPageAccess(page, isHit);
+
+            if (isHit) {
+                activityPanel.clearFault();
+            }
         });
 
         // Page fault
         this.simulation.on('onPageFault', (page) => {
-            this.eventLog.logPageFault(page);
-            const mesh = this.pageRenderer.getPageMesh(page.id);
+            eventLog.logPageFault(page);
+            activityPanel.showPageFault(page);
+
+            const mesh = pageRenderer.getPageMesh(page.id);
             if (mesh) {
-                this.effectsManager.createPageFaultFlash(mesh.position);
+                effectsManager.createPageFaultFlash(mesh.position);
             }
         });
 
         // Thrashing state change
         this.simulation.on('onThrashingChange', (isThrashing) => {
-            this.eventLog.logThrashing(isThrashing);
+            eventLog.logThrashing(isThrashing);
             if (isThrashing) {
-                this.effectsManager.activateThrashing();
+                effectsManager.activateThrashing();
             } else {
-                this.effectsManager.deactivateThrashing();
+                effectsManager.deactivateThrashing();
             }
         });
 
         // Stats update
         this.simulation.on('onStatsUpdate', (stats) => {
-            this.kpiDashboard.update(stats);
+            kpiDashboard.update(stats);
         });
 
         // Process added
         this.simulation.on('onProcessAdded', (process) => {
-            this.eventLog.logProcessAdded(process);
+            eventLog.logProcessAdded(process);
         });
     }
 
@@ -263,6 +310,7 @@ class ThrashingVisualizer {
         this.pageRenderer.clear();
         this.effectsManager.deactivateThrashing();
         this.kpiDashboard.reset();
+        this.activityPanel.reset();
         this.controls.setPlaying(false);
         this.eventLog.logSimulationReset();
         return this;

@@ -72,6 +72,7 @@
 
             <!-- Right Panel - KPIs & Log -->
             <aside class="panel panel-right">
+                <div id="activity-panel-container"></div>
                 <div id="kpi-container"></div>
                 <div id="event-log-container"></div>
             </aside>
@@ -79,23 +80,38 @@
 
         <!-- Footer Info -->
         <footer class="app-footer">
-            <div class="info-cards">
+            <div class="info-cards expanded">
+                <div class="info-card">
+                    <h4>🖥️ Virtual Memory</h4>
+                    <p>An abstraction that gives each process the illusion of having its own large, contiguous memory space. The OS maps virtual addresses to physical RAM or disk, allowing programs larger than physical memory to run.</p>
+                </div>
+                <div class="info-card">
+                    <h4>📄 Paging</h4>
+                    <p>Memory is divided into fixed-size blocks called <strong>pages</strong> (typically 4KB). RAM is divided into <strong>frames</strong> of the same size. The <strong>page table</strong> maps virtual pages to physical frames.</p>
+                </div>
                 <div class="info-card">
                     <h4>🎯 Page Fault</h4>
-                    <p>Occurs when a referenced page is not in RAM and must be fetched from disk.</p>
+                    <p>Occurs when a process accesses a page not currently in RAM. The CPU traps to the OS, which must locate the page on disk, find a free frame (or evict a page), load the page, and update the page table. This is <em>expensive</em> (milliseconds vs nanoseconds).</p>
                 </div>
                 <div class="info-card">
                     <h4>🔄 Swapping</h4>
-                    <p>Moving pages between RAM and disk to free memory for active processes.</p>
+                    <p>When RAM is full, the OS moves ("swaps") inactive pages to disk swap space to free frames for active pages. <strong>Swap Out</strong>: RAM → Disk. <strong>Swap In</strong>: Disk → RAM. Each swap involves disk I/O.</p>
+                </div>
+                <div class="info-card">
+                    <h4>📊 FIFO Algorithm</h4>
+                    <p><strong>First-In-First-Out</strong>: Evicts the oldest page in RAM. Simple to implement using a queue. Drawback: may evict frequently-used pages (suffers from Belady's anomaly).</p>
+                </div>
+                <div class="info-card">
+                    <h4>📈 LRU Algorithm</h4>
+                    <p><strong>Least Recently Used</strong>: Evicts the page that hasn't been accessed for the longest time. Based on temporal locality principle. More effective but requires tracking access times.</p>
                 </div>
                 <div class="info-card">
                     <h4>🔥 Thrashing</h4>
-                    <p>When the system spends more time swapping pages than executing processes.</p>
+                    <p>When the system spends more time swapping pages than executing processes. Causes: too many processes, insufficient RAM, poor locality. Symptoms: high disk I/O, low CPU utilization. Solution: reduce multiprogramming or add RAM.</p>
                 </div>
                 <div class="info-card">
-                    <h4>⌨️ Keyboard</h4>
-                    <p><kbd>Space</kbd> Play/Pause | <kbd>→</kbd> Step | <kbd>R</kbd> Reset | <kbd>1-3</kbd> Scenarios
-                    </p>
+                    <h4>⌨️ Keyboard Shortcuts</h4>
+                    <p><kbd>Space</kbd> Play/Pause | <kbd>→</kbd> Step | <kbd>R</kbd> Reset | <kbd>1-3</kbd> Scenarios</p>
                 </div>
             </div>
         </footer>
@@ -134,6 +150,7 @@
     <script src="js/ui/Controls.js"></script>
     <script src="js/ui/EventLog.js"></script>
     <script src="js/ui/ScenarioSelector.js"></script>
+    <script src="js/ui/ActivityPanel.js"></script>
 
     <!-- Main Application -->
     <script src="js/main.js"></script>
