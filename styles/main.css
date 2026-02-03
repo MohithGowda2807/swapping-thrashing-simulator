@@ -1,0 +1,851 @@
+/**
+ * Main Stylesheet for Thrashing 3D Visualizer
+ * Modern dark theme with rich aesthetics
+ */
+
+/* ==================== CSS Variables ==================== */
+:root {
+    /* Color Palette - Color-blind friendly */
+    --primary: hsl(250, 90%, 60%);
+    --primary-hover: hsl(250, 90%, 70%);
+    --primary-dark: hsl(250, 90%, 50%);
+    --secondary: hsl(180, 80%, 50%);
+    --accent: hsl(320, 80%, 60%);
+
+    /* Status Colors */
+    --success: hsl(145, 70%, 45%);
+    --warning: hsl(40, 95%, 55%);
+    --danger: hsl(0, 75%, 55%);
+    --info: hsl(210, 80%, 55%);
+
+    /* Memory Colors */
+    --ram-color: hsl(145, 70%, 50%);
+    --disk-color: hsl(210, 80%, 55%);
+    --fault-color: hsl(30, 90%, 55%);
+    --thrashing-color: hsl(0, 80%, 55%);
+
+    /* Background */
+    --bg-primary: hsl(230, 25%, 8%);
+    --bg-secondary: hsl(230, 20%, 12%);
+    --bg-card: hsl(230, 18%, 15%);
+    --bg-elevated: hsl(230, 15%, 18%);
+    --bg-input: hsl(230, 20%, 10%);
+
+    /* Text */
+    --text-primary: hsl(0, 0%, 95%);
+    --text-secondary: hsl(0, 0%, 70%);
+    --text-muted: hsl(0, 0%, 50%);
+
+    /* Borders */
+    --border-color: hsla(250, 50%, 50%, 0.2);
+    --border-hover: hsla(250, 50%, 50%, 0.4);
+
+    /* Spacing */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    --space-2xl: 3rem;
+
+    /* Border Radius */
+    --radius-sm: 0.375rem;
+    --radius-md: 0.625rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+
+    /* Shadows */
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+    --shadow-glow: 0 0 20px hsla(250, 90%, 60%, 0.3);
+
+    /* Transitions */
+    --transition-fast: 150ms ease;
+    --transition-normal: 250ms ease;
+    --transition-slow: 400ms ease;
+}
+
+/* ==================== Reset & Base ==================== */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* ==================== App Container ==================== */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background:
+        radial-gradient(ellipse at 20% 20%, hsla(250, 80%, 40%, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, hsla(180, 80%, 40%, 0.1) 0%, transparent 50%),
+        var(--bg-primary);
+}
+
+/* ==================== Header ==================== */
+.app-header {
+    padding: var(--space-md) var(--space-xl);
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1800px;
+    margin: 0 auto;
+}
+
+.app-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.title-icon {
+    font-size: 2.5rem;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.title-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.gradient-text {
+    font-size: 1.75rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent));
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradientShift 4s ease infinite;
+}
+
+.subtitle {
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+}
+
+.header-info {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+.badge {
+    padding: var(--space-xs) var(--space-md);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+/* ==================== Main Content ==================== */
+.main-content {
+    display: grid;
+    grid-template-columns: 320px 1fr 360px;
+    gap: var(--space-lg);
+    padding: var(--space-lg);
+    flex: 1;
+    max-width: 1920px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* ==================== Panels ==================== */
+.panel {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+.panel-left,
+.panel-right {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    max-height: calc(100vh - 180px);
+    overflow-y: auto;
+}
+
+.panel-center {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ==================== Visualization ==================== */
+.visualization-wrapper {
+    position: relative;
+    flex: 1;
+    min-height: 500px;
+}
+
+.visualization-canvas {
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.visualization-canvas canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.visualization-overlay {
+    position: absolute;
+    bottom: var(--space-md);
+    left: var(--space-md);
+    right: var(--space-md);
+    pointer-events: none;
+}
+
+.legend {
+    display: flex;
+    gap: var(--space-lg);
+    padding: var(--space-sm) var(--space-md);
+    background: hsla(230, 20%, 10%, 0.9);
+    border-radius: var(--radius-md);
+    backdrop-filter: blur(10px);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: var(--radius-sm);
+}
+
+.legend-color.ram-color {
+    background: var(--ram-color);
+}
+
+.legend-color.disk-color {
+    background: var(--disk-color);
+}
+
+.legend-color.fault-color {
+    background: var(--fault-color);
+}
+
+/* ==================== Section Titles ==================== */
+.section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--secondary);
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.subsection-title {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin: var(--space-md) 0 var(--space-sm);
+}
+
+/* ==================== Controls Section ==================== */
+.controls-section {
+    margin-bottom: var(--space-lg);
+}
+
+.playback-controls {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+.view-controls {
+    display: flex;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+}
+
+/* ==================== Buttons ==================== */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border: none;
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    white-space: nowrap;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--primary-hover), var(--primary));
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-glow);
+}
+
+.btn-secondary {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+    background: var(--bg-input);
+    border-color: var(--border-hover);
+}
+
+.btn-process {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    font-size: 0.8rem;
+    padding: var(--space-sm);
+}
+
+.btn-process:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.btn-icon {
+    font-size: 1rem;
+}
+
+.btn-icon-only {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: var(--space-xs);
+    opacity: 0.7;
+    transition: opacity var(--transition-fast);
+}
+
+.btn-icon-only:hover {
+    opacity: 1;
+}
+
+.full-width {
+    width: 100%;
+}
+
+/* ==================== Sliders ==================== */
+.slider-control {
+    margin-bottom: var(--space-sm);
+}
+
+.slider-control input[type="range"] {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--bg-input);
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.slider-control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+    transition: transform var(--transition-fast);
+}
+
+.slider-control input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+.slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: var(--space-xs);
+}
+
+/* ==================== Config Grid ==================== */
+.config-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+}
+
+.config-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.config-item:last-child {
+    grid-column: span 2;
+}
+
+.config-item label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.config-item input,
+.config-item select {
+    padding: var(--space-sm);
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.875rem;
+}
+
+.config-item input:focus,
+.config-item select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px hsla(250, 90%, 60%, 0.2);
+}
+
+/* ==================== Scenario Selector ==================== */
+.scenario-dropdown select {
+    width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.scenario-description {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin: var(--space-sm) 0 var(--space-md);
+    padding: var(--space-sm);
+    background: var(--bg-elevated);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--primary);
+}
+
+.process-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-sm);
+}
+
+/* ==================== KPI Dashboard ==================== */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+}
+
+.kpi-card {
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    text-align: center;
+    border: 1px solid var(--border-color);
+    transition: all var(--transition-normal);
+}
+
+.kpi-card:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-2px);
+}
+
+.kpi-icon {
+    font-size: 1.5rem;
+    margin-bottom: var(--space-xs);
+}
+
+.kpi-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--secondary);
+}
+
+.kpi-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ==================== Utilization Bars ==================== */
+.utilization-section {
+    margin-bottom: var(--space-md);
+}
+
+.utilization-bar {
+    margin-bottom: var(--space-md);
+}
+
+.utilization-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: var(--space-xs);
+}
+
+.utilization-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.utilization-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.progress-bar {
+    height: 8px;
+    background: var(--bg-input);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width var(--transition-normal);
+}
+
+.progress-fill.ram-fill {
+    background: linear-gradient(90deg, var(--ram-color), hsl(145, 70%, 60%));
+}
+
+.progress-fill.swap-fill {
+    background: linear-gradient(90deg, var(--disk-color), hsl(210, 80%, 65%));
+}
+
+/* ==================== Thrashing Section ==================== */
+.thrashing-section {
+    padding: var(--space-md);
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+}
+
+.thrashing-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: var(--space-sm);
+    font-size: 0.85rem;
+}
+
+.thrashing-bar {
+    height: 10px;
+    background: var(--bg-input);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: var(--space-sm);
+}
+
+.thrashing-fill {
+    height: 100%;
+    border-radius: 5px;
+    transition: all var(--transition-normal);
+    background: linear-gradient(90deg, var(--success), hsl(145, 70%, 60%));
+}
+
+.thrashing-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+    background: linear-gradient(135deg, var(--danger), hsl(0, 80%, 45%));
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+    font-size: 0.85rem;
+    animation: pulse 0.5s ease-in-out infinite;
+}
+
+.thrashing-indicator.hidden {
+    display: none;
+}
+
+/* ==================== Event Log ==================== */
+.event-log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-sm);
+}
+
+.event-log-content {
+    max-height: 300px;
+    overflow-y: auto;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    padding: var(--space-sm);
+}
+
+.log-entry {
+    padding: var(--space-sm);
+    margin-bottom: var(--space-xs);
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    border-left: 3px solid transparent;
+    animation: slideIn 0.2s ease-out;
+}
+
+.log-entry.info {
+    background: hsla(210, 80%, 55%, 0.1);
+    border-color: var(--info);
+}
+
+.log-entry.success {
+    background: hsla(145, 70%, 45%, 0.1);
+    border-color: var(--success);
+}
+
+.log-entry.warning {
+    background: hsla(40, 95%, 55%, 0.1);
+    border-color: var(--warning);
+}
+
+.log-entry.danger {
+    background: hsla(0, 75%, 55%, 0.1);
+    border-color: var(--danger);
+}
+
+.log-time {
+    color: var(--text-muted);
+    margin-right: var(--space-sm);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+}
+
+.log-details {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    margin-top: var(--space-xs);
+}
+
+/* ==================== Footer ==================== */
+.app-footer {
+    padding: var(--space-lg) var(--space-xl);
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+}
+
+.info-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--space-md);
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.info-card {
+    padding: var(--space-md);
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+}
+
+.info-card h4 {
+    font-size: 0.9rem;
+    margin-bottom: var(--space-sm);
+    color: var(--secondary);
+}
+
+.info-card p {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.info-card kbd {
+    display: inline-block;
+    padding: 2px 6px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+}
+
+/* ==================== Scrollbar ==================== */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-input);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-hover);
+}
+
+/* ==================== Animations ==================== */
+@keyframes gradientShift {
+
+    0%,
+    100% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.8;
+        transform: scale(1.02);
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* ==================== Responsive ==================== */
+@media (max-width: 1400px) {
+    .main-content {
+        grid-template-columns: 280px 1fr 320px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .main-content {
+        grid-template-columns: 1fr;
+    }
+
+    .panel-left,
+    .panel-right {
+        max-height: none;
+    }
+
+    .visualization-wrapper {
+        min-height: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    .app-header {
+        padding: var(--space-sm) var(--space-md);
+    }
+
+    .header-content {
+        flex-direction: column;
+        gap: var(--space-sm);
+    }
+
+    .gradient-text {
+        font-size: 1.25rem;
+    }
+
+    .main-content {
+        padding: var(--space-md);
+        gap: var(--space-md);
+    }
+
+    .kpi-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .info-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .legend {
+        flex-direction: column;
+        gap: var(--space-sm);
+    }
+}
+
+/* ==================== High DPI / 4K ==================== */
+@media (min-width: 2560px) {
+    :root {
+        font-size: 18px;
+    }
+
+    .main-content {
+        grid-template-columns: 400px 1fr 450px;
+    }
+}
